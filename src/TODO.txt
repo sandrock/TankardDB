@@ -1,0 +1,83 @@
+
+TankardDB - planned work
+==================
+
+TankardDB instance
+----------------------
+
+- Configuration: contains some kvps
+- Store: object in charge of reading/writing files
+- 
+
+Public methods
+-----------------
+
+- [ ] Insert(obj)
+  - Generate a new ID
+  - Append object to ObjectStore
+  - Append MainIndex
+  - Update indexes
+- [ ] Delete/Update(object)
+  - Append empty/changed objects to ObjectStore
+  - Append MainIndex
+- [ ] GetById(string id)
+  - Seek MainIndex until desired id(s) are found
+  - Seek ObjectStore until object(s) are retreived
+- [ ] List
+  - Read n unique ids from main index
+  - Read from ObjectStore
+- [ ] Count
+  - Count unique ids from MainIndex
+- [ ] List<T>
+  - Read n unique ids from MainIndex where (Name(T))
+- [ ] CreateIndex<T(Expression<Func<T, object>> )
+
+Object store (file)
+-----------------------
+
+Properties:
+
+- file is append only
+- file is read by index (MainIndex)
+
+Content:
+
+    {object}
+    {object}
+    ...
+
+Main index (file)
+---------------------
+
+Properties: 
+
+- file is append only
+- format: text; charset=???
+- a cleanup job might remove content from the file
+
+Content:
+
+    {ObjectId};Str.Beg={ObjectStore.StartIndex};Str.End={ObjectStore.EndIndex}\n
+    or
+    {ObjectId};Del\n
+
+
+
+IStore
+--------
+
+Files:
+
+- ObjectStore
+- MainIndex
+
+
+FileStore 
+---------------
+
+This type of storage uses a lock file to prevent concurrent access to the same data files.
+
+
+
+
+
