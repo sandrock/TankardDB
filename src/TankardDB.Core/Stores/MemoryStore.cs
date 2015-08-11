@@ -25,11 +25,12 @@ namespace TankardDB.Core.Stores
                 if (this.occupiedIdRanges.Count > 0)
                 {
                     var maxItem = this.occupiedIdRanges.OrderByDescending(r => r.End).First();
-                    reservation = new Range(maxItem.End + 1, maxItem.End + 1 + count);
+                    var from = maxItem.End + 1;
+                    reservation = new Range(from, from + count - 1);
                 }
                 else
                 {
-                    reservation = new Range(1, count + 1);
+                    reservation = new Range(1, count);
                 }
 
                 this.occupiedIdRanges.Add(reservation);
