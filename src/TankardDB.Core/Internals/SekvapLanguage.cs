@@ -5,7 +5,7 @@ namespace TankardDB.Core.Internals
     using System.Collections.Generic;
     using System.Linq;
 
-    public class SekvapLanguage : IMetadataLanguage
+    public class SekvapLanguage
     {
         public SekvapLanguage()
         {
@@ -16,7 +16,7 @@ namespace TankardDB.Core.Internals
             if (value == null)
                 throw new ArgumentNullException("value");
 
-            return value != null && value.StartsWith(Prefix);
+            return value != null;
         }
 
         public void ResolveVariables()
@@ -35,8 +35,8 @@ namespace TankardDB.Core.Internals
             var result = new List<KeyValuePair<string, string>>();
             bool isStart = true, isKey = false, isValue = false, isEnd = false;
             string capturedKey = null;
-            int captureStartIndex = Prefix.Length, captureEndIndex, captureLength;
-            for (int i = Prefix.Length; i <= value.Length; i++)
+            int captureStartIndex = 0, captureEndIndex, captureLength;
+            for (int i = 0; i <= value.Length; i++)
             {
                 char c, cp1;
                 if (i == value.Length)

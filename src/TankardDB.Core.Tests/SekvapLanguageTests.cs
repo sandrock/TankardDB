@@ -27,7 +27,7 @@ namespace TankardDB.Core.Tests
             public void PrefixOk_Value()
             {
                 var lang = new SekvapLanguage();
-                string input = SekvapLanguage.Prefix + "VaLuE";
+                string input = "VaLuE";
                 bool result = lang.IsMatch(input);
                 Assert.IsTrue(result, "The input should match the language processor");
             }
@@ -53,7 +53,7 @@ namespace TankardDB.Core.Tests
             public void PrefixOk_NoValue()
             {
                 var lang = new SekvapLanguage();
-                string input = SekvapLanguage.Prefix;
+                string input = string.Empty;
                 bool result = lang.IsMatch(input);
                 Assert.IsTrue(result, "The input should match the language processor");
             }
@@ -62,7 +62,7 @@ namespace TankardDB.Core.Tests
             public void PrefixOk_ValueAndStuff()
             {
                 var lang = new SekvapLanguage();
-                string input = SekvapLanguage.Prefix + "VaLuE;Key=Val";
+                string input = "VaLuE;Key=Val";
                 bool result = lang.IsMatch(input);
                 Assert.IsTrue(result, "The input should match the language processor");
             }
@@ -92,7 +92,7 @@ namespace TankardDB.Core.Tests
             public void PrefixOk_NoValue()
             {
                 var lang = new SekvapLanguage();
-                string input = SekvapLanguage.Prefix;
+                string input = string.Empty;
                 var result = lang.Parse(input);
                 Assert.IsNotNull(result);
                 Assert.AreEqual(1, result.Count);
@@ -108,7 +108,7 @@ namespace TankardDB.Core.Tests
                 {
                     "hello world",
                 };
-                string input = SekvapLanguage.Prefix + parts[0];
+                string input = parts[0];
                 var result = lang.Parse(input);
                 Assert.IsNotNull(result);
                 Assert.AreEqual(1, result.Count);
@@ -124,7 +124,7 @@ namespace TankardDB.Core.Tests
                 {
                     "hello ;; world",
                 };
-                string input = SekvapLanguage.Prefix + parts[0];
+                string input = parts[0];
                 var result = lang.Parse(input);
                 Assert.IsNotNull(result);
                 Assert.AreEqual(1, result.Count);
@@ -141,7 +141,7 @@ namespace TankardDB.Core.Tests
                     "hello world",
                     ";", "Name", "=", "John Smith",
                 };
-                string input = SekvapLanguage.Prefix + string.Join(string.Empty, parts);
+                string input = string.Join(string.Empty, parts);
                 var result = lang.Parse(input);
                 Assert.IsNotNull(result);
                 Assert.AreEqual(2, result.Count);
@@ -162,7 +162,7 @@ namespace TankardDB.Core.Tests
                     ";", "Name", "=", "John Smith",
                     ";", "Foo", "=", "Bar",
                 };
-                string input = SekvapLanguage.Prefix + string.Join(string.Empty, parts);
+                string input = string.Join(string.Empty, parts);
                 var result = lang.Parse(input);
                 Assert.IsNotNull(result);
                 Assert.AreEqual(3, result.Count);

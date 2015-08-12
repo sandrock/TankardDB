@@ -36,7 +36,7 @@ Public methods
 Internal todo
 -----------------
 
-- [ ] Import SekvapLanguage.cs
+- [x] Import SekvapLanguage.cs
 
 
 Object store (file)

@@ -15,7 +15,6 @@ namespace TankardDB.Core.Stores
         private readonly Dictionary<string, ITankardItem> objectStore = new Dictionary<string, ITankardItem>();
         private readonly ReaderWriterLockSlim objectLock = new ReaderWriterLockSlim();
 
-
         public async Task<long[]> ReserveIds(long count)
         {
             this.occupiedIdLock.EnterWriteLock();
