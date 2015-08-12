@@ -32,6 +32,13 @@ Public methods
   - Read n unique ids from MainIndex where (Name(T))
 - [ ] CreateIndex<T(Expression<Func<T, object>> )
 
+
+Internal todo
+-----------------
+
+- [ ] Import SekvapLanguage.cs
+
+
 Object store (file)
 -----------------------
 
@@ -40,11 +47,19 @@ Properties:
 - file is append only
 - file is read by index (MainIndex)
 
+Header:
+
+    TankardDB-ObjectStore;Charset=UTF8\n
+
 Content:
 
     {object}
     {object}
     ...
+
+Notes:
+
+- read header on initialize: read bytes from begin until '\n', interpret as ASCII, process Sekvap
 
 Main index (file)
 ---------------------
@@ -55,12 +70,20 @@ Properties:
 - format: text; charset=???
 - a cleanup job might remove content from the file
 
+Header:
+
+    TankardDB-MainIndex;Charset=UTF8\n
+
 Content:
 
     {ObjectId};Str.Beg={ObjectStore.StartIndex};Str.End={ObjectStore.EndIndex}\n
     or
     {ObjectId};Del\n
 
+
+Notes:
+
+- read header on initialize: read bytes from begin until '\n', interpret as ASCII, process Sekvap
 
 
 IStore

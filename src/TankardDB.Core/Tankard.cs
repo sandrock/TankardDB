@@ -14,7 +14,7 @@ namespace TankardDB.Core
 
         private readonly ReaderWriterLockSlim idsLock = new ReaderWriterLockSlim();
         private readonly List<long> idsList = new List<long>();
-        private long idsReserveSize = 8L;
+        private long idsReserveSize = 1L;
         private long assignedIds = 0L;
 
         public Tankard(IStore store)
@@ -30,7 +30,7 @@ namespace TankardDB.Core
             }
         }
 
-        public async Task<ITankardItem> Insert(ITankardItem item)
+        public async Task Insert(ITankardItem item)
         {
             var setName = this.GetSetName(item);
             var id = await this.GetNextId(setName);
@@ -38,7 +38,7 @@ namespace TankardDB.Core
             await this.store.AppendObject(item);
             // update ID index
             // update indexes
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         private string GetSetName(ITankardItem item)
@@ -63,6 +63,13 @@ namespace TankardDB.Core
                     this.idsList.RemoveAt(index);
                     this.assignedIds++;
                     return this.ConcatId(setName, id);
+                }
+                else
+                {
+                    if (this.assignedIds > this.idsReserveSize)
+                    {
+                        this.idsReserveSize = this.assignedIds;
+                    }
                 }
             }
             finally
