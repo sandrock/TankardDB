@@ -4,6 +4,7 @@ namespace TankardDB.Core.Internals
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
 
     public class SekvapLanguage
     {
@@ -112,6 +113,32 @@ namespace TankardDB.Core.Internals
         public static void AddToResult(List<KeyValuePair<string, string>> collection, string key, string value)
         {
             collection.Add(new KeyValuePair<string, string>(key, value));
+        }
+
+        public string Write(IEnumerable<KeyValuePair<string, string>> values)
+        {
+            var sb = new StringBuilder();
+            foreach (var item in values)
+            {
+                if (item.Key == "Value")
+                {
+                    sb.Insert(0, Escape(item.Value));
+                }
+                else
+                {
+                    sb.Append(";");
+                    sb.Append(item.Key);
+                    sb.Append("=");
+                    sb.Append(item.Value);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private string Escape(string value)
+        {
+            return value.Replace(";", ";;");
         }
     }
 }

@@ -6,6 +6,7 @@ namespace TankardDB.Core
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using TankardDB.Core.Internals;
     using TankardDB.Core.Stores;
 
     public class Tankard
@@ -33,10 +34,16 @@ namespace TankardDB.Core
         public async Task Insert(ITankardItem item)
         {
             var setName = this.GetSetName(item);
+            
             var id = await this.GetNextId(setName);
             item.Id = id;
-            await this.store.AppendObject(item);
+            
+            MainIndexRow objectIndex;
+            objectIndex = await this.store.AppendObject(item);
+            
             // update ID index
+            await this.store.AppendMainIndex(objectIndex);
+
             // update indexes
             //throw new NotImplementedException();
         }
