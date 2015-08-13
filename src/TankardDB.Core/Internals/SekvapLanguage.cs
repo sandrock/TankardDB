@@ -117,6 +117,9 @@ namespace TankardDB.Core.Internals
 
         public string Write(IEnumerable<KeyValuePair<string, string>> values)
         {
+            if (values == null)
+                throw new ArgumentNullException("values");
+
             var sb = new StringBuilder();
             foreach (var item in values)
             {
@@ -129,11 +132,16 @@ namespace TankardDB.Core.Internals
                     sb.Append(";");
                     sb.Append(item.Key);
                     sb.Append("=");
-                    sb.Append(item.Value);
+                    sb.Append(Escape(item.Value));
                 }
             }
 
             return sb.ToString();
+        }
+
+        private string Unescape(string value)
+        {
+            return value.Replace(";;", ";");
         }
 
         private string Escape(string value)

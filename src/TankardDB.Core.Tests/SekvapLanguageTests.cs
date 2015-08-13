@@ -129,7 +129,7 @@ namespace TankardDB.Core.Tests
                 Assert.IsNotNull(result);
                 Assert.AreEqual(1, result.Count);
                 Assert.AreEqual("Value", result[0].Key);
-                Assert.AreEqual(parts[0], result[0].Value);
+                Assert.AreEqual("hello ; world", result[0].Value);
             }
 
             [TestMethod]
@@ -173,6 +173,102 @@ namespace TankardDB.Core.Tests
                 Assert.AreEqual(parts[4], result[i].Value);
                 Assert.AreEqual(parts[6], result[++i].Key);
                 Assert.AreEqual(parts[8], result[i].Value);
+            }
+
+            [TestMethod]
+            public void OneKeyWithEscape()
+            {
+                var target = new SekvapLanguage();
+                string key1 = "Key1";
+                string value1 = "Super;Sheep";
+                string expected = ";" + key1 + "=Super;;Sheep";
+                var parts = new string[]
+                {
+                    ";", "Key1", "=", "Super;;Sheep",
+                };
+                string input = string.Join(string.Empty, parts);
+                var result = target.Parse(input);
+                Assert.IsNotNull(result);
+                Assert.AreEqual(2, result.Count);
+                int i = -1;
+                Assert.AreEqual("Value", result[++i].Key);
+                Assert.AreEqual(string.Empty, result[i].Value);
+                Assert.AreEqual("Key1", result[++i].Key);
+                Assert.AreEqual("Super;Sheep", result[i].Value);
+            }
+        }
+
+        [TestClass]
+        public class WriteMethod
+        {
+            [TestMethod, ExpectedException(typeof(ArgumentNullException))]
+            public void Arg0IsNull()
+            {
+                var target = new SekvapLanguage();
+                target.Write(null);
+            }
+
+            [TestMethod]
+            public void ValueOnly()
+            {
+                var target = new SekvapLanguage();
+                string input = "Hello World";
+                var data = new List<KeyValuePair<string, string>>();
+                data.Add(new KeyValuePair<string, string>("Value", input));
+                var result = target.Write(data);
+                Assert.AreEqual(input, result);
+            }
+
+            [TestMethod]
+            public void ValueAndOneKey()
+            {
+                var target = new SekvapLanguage();
+                string input = "Hello World";
+                string key1 = "Key1";
+                string value1 = "Super Sheep";
+                string expected = input + ";" + key1 + "=" + value1;
+                var data = new List<KeyValuePair<string, string>>();
+                data.Add(new KeyValuePair<string, string>("Value", input));
+                data.Add(new KeyValuePair<string, string>(key1, value1));
+                var result = target.Write(data);
+                Assert.AreEqual(expected, result);
+            }
+
+            [TestMethod]
+            public void OneKey()
+            {
+                var target = new SekvapLanguage();
+                string key1 = "Key1";
+                string value1 = "Super Sheep";
+                string expected = ";" + key1 + "=" + value1;
+                var data = new List<KeyValuePair<string, string>>();
+                data.Add(new KeyValuePair<string, string>(key1, value1));
+                var result = target.Write(data);
+                Assert.AreEqual(expected, result);
+            }
+
+            [TestMethod]
+            public void OneKeyWithEscape()
+            {
+                var target = new SekvapLanguage();
+                string key1 = "Key1";
+                string value1 = "Super;Sheep";
+                string expected = ";" + key1 + "=Super;;Sheep";
+                var data = new List<KeyValuePair<string, string>>();
+                data.Add(new KeyValuePair<string, string>(key1, value1));
+                var result = target.Write(data);
+                Assert.AreEqual(expected, result);
+            }
+
+            [TestMethod]
+            public void ValueOnlyWithEscape()
+            {
+                var target = new SekvapLanguage();
+                string input = "Hello;World";
+                var data = new List<KeyValuePair<string, string>>();
+                data.Add(new KeyValuePair<string, string>("Value", input));
+                var result = target.Write(data);
+                Assert.AreEqual("Hello;;World", result);
             }
         }
     }
