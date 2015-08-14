@@ -8,6 +8,7 @@ namespace TankardDB.Core.Tests
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using TankardDB.Core.Internals;
     using TankardDB.Core.Stores;
 
     [TestClass]
@@ -15,6 +16,15 @@ namespace TankardDB.Core.Tests
     {
         public class AClass : ITankardItem
         {
+            public AClass()
+            {
+            }
+
+            public AClass(string name)
+            {
+                this.Name = name;
+            }
+
             public string Id { get; set; }
             public string Name { get; set; }
         }
@@ -46,12 +56,93 @@ namespace TankardDB.Core.Tests
             public async Task ObjectStoreGetsCalled()
             {
                 var item = new AClass();
-                var store = new Mock<IStore>();
-                store.Setup(s => s.ReserveIds(It.IsAny<long>())).ReturnsAsync(new long[] { 1, }).Verifiable();
-                store.Setup(s => s.AppendObject(It.Is<ITankardItem>(x => x == item))).Verifiable();
-                var target = new Tankard(store.Object);
+                var store = new TestStore();
+                store.ReserveIdsDelegate = async x =>
+                {
+                    return await Task.Run(() => new long[] { 1, });
+                };
+                store.AppendObjectDelegate = async (id,bytes) =>
+                {
+                    return await Task.Run(() =>
+                    {
+                        var row = new MainIndexRow("AClass-1", 1, 0);
+                        return row;
+                    });
+                };
+                store.AppendMainIndexDelegate = async x =>
+                {
+                    await Task.Run(() => { });
+                };
+                var target = new Tankard(store);
                 await target.Insert(item);
-                store.VerifyAll();
+
+                Assert.AreEqual(1, store.ReserveIdsCount, "ReserveIds should have been called 1 time");
+                Assert.AreEqual(1, store.AppendObjectCount, "AppendObject should have been called 1 time");
+                Assert.AreEqual(1, store.AppendMainIndexCount, "AppendMainIndex should have been called 1 time");
+            }
+        }
+
+        [TestClass]
+        public class GetByIdMethod
+        {
+            private static Tankard GetTarget()
+            {
+                return new Tankard(new MemoryStore());
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentNullException))]
+            public async Task Single_Arg0IsNull()
+            {
+                var target = GetTarget();
+                string id = null;
+                var result = await target.GetById(id);
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentException))]
+            public async Task Single_Arg0IsEmpty()
+            {
+                var target = GetTarget();
+                string id = string.Empty;
+                var result = await target.GetById(id);
+            }
+
+            [TestMethod]
+            public async Task Single_FirstInsert()
+            {
+                var target = GetTarget();
+                
+                AClass insert = new AClass("Hello world");
+                await target.Insert(insert);
+                string id = insert.Id;
+
+                var objResult = await target.GetById(id);
+                AClass result = (AClass)objResult;
+                Assert.IsNotNull(result);
+                Assert.AreEqual(id, result.Id);
+                Assert.AreEqual(insert.Name, result.Name);
+            }
+
+            [TestMethod]
+            public async Task Single_SecondInsert()
+            {
+                var target = GetTarget();
+
+                AClass[] inserts = new AClass[]
+                {
+                    new AClass("Hello world"),
+                    new AClass("Poke & mon"),
+                };
+                await target.Insert(inserts[0]);
+                await target.Insert(inserts[1]);
+
+                string expectedId = "AClass-2";
+                Assert.AreEqual(expectedId, inserts[1].Id);
+
+                var objResult = await target.GetById(inserts[1].Id);
+                AClass result = (AClass)objResult;
+                Assert.IsNotNull(result);
+                Assert.AreEqual(expectedId, result.Id);
+                Assert.AreEqual(inserts[1].Name, result.Name);
             }
         }
     }

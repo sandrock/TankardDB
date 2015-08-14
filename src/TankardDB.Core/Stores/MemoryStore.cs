@@ -3,6 +3,7 @@ namespace TankardDB.Core.Stores
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -13,11 +14,13 @@ namespace TankardDB.Core.Stores
         private readonly List<Range> occupiedIdRanges = new List<Range>();
         private readonly ReaderWriterLockSlim occupiedIdLock = new ReaderWriterLockSlim();
 
-        private readonly List<ITankardItem> objectStore = new List<ITankardItem>();
+        private readonly List<byte[]> objectStore = new List<byte[]>();
         private readonly ReaderWriterLockSlim objectLock = new ReaderWriterLockSlim();
 
         private readonly List<string> mainIndex = new List<string>();
         private readonly ReaderWriterLockSlim mainIndexLock = new ReaderWriterLockSlim();
+
+        private readonly SekvapLanguage lang = new SekvapLanguage();
 
         public async Task<long[]> ReserveIds(long count)
         {
@@ -55,16 +58,16 @@ namespace TankardDB.Core.Stores
             });
         }
 
-        public async Task<MainIndexRow> AppendObject(ITankardItem item)
+        public async Task<MainIndexRow> AppendObject(string id, byte[] data)
         {
             return await Task.Run(() =>
             {
                 this.objectLock.EnterWriteLock();
                 try
                 {
-                    this.objectStore.Add(item);
-                    var index = this.objectStore.IndexOf(item);
-                    var result = new MainIndexRow(item.Id, index, index);
+                    this.objectStore.Add(data);
+                    var index = this.objectStore.IndexOf(data);
+                    var result = new MainIndexRow(id, index, data.Length, null);
                     return result;
                 }
                 finally
@@ -76,17 +79,71 @@ namespace TankardDB.Core.Stores
 
         public async Task AppendMainIndex(MainIndexRow item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item");
+
             await Task.Run(() =>
             {
                 this.mainIndexLock.EnterWriteLock();
                 try
                 {
-                    var data = item.ToSekvap();
+                    var data = item.ToSekvap(this.lang);
                     this.mainIndex.Add(data);
                 }
                 finally
                 {
                     this.mainIndexLock.ExitWriteLock();
+                }
+            });
+        }
+
+        public async Task<MainIndexRow> SeekLatestMainIndex(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentException("The value cannot be empty", "id");
+
+            return await Task.Run(() =>
+            {
+                this.mainIndexLock.EnterReadLock();
+                try
+                {
+                    for (int i = 0; i < this.mainIndex.Count; i++)
+                    {
+                        var itemAsString = this.mainIndex[this.mainIndex.Count - i - 1];
+                        var itemData = this.lang.Parse(itemAsString);
+                        var row = new MainIndexRow(itemData);
+                        if (row.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return row;
+                        }
+                    }
+
+                    return null;
+                }
+                finally
+                {
+                    this.mainIndexLock.ExitReadLock();
+                }
+            });
+        }
+
+        public async Task<byte[]> GetObject(MainIndexRow row)
+        {
+            if (row == null)
+                throw new ArgumentNullException("row");
+
+            return await Task.Run(() =>
+            {
+                this.objectLock.EnterReadLock();
+                try
+                {
+                    var bytes = this.objectStore[checked((int)row.ObjectStoreBeginIndex)];
+                    Debug.Assert(bytes.Length == row.ObjectStoreLength, "MemoryStore.GetObject: bytes.Length != row.ObjectStoreLength");
+                    return bytes;
+                }
+                finally
+                {
+                    this.objectLock.ExitReadLock();
                 }
             });
         }

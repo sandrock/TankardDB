@@ -11,8 +11,12 @@ namespace TankardDB.Core.Stores
     {
         Task<long[]> ReserveIds(long count);
 
-        Task<MainIndexRow> AppendObject(ITankardItem item);
+        Task<MainIndexRow> AppendObject(string id, byte[] data);
 
         Task AppendMainIndex(MainIndexRow row);
+
+        Task<MainIndexRow> SeekLatestMainIndex(string id);
+
+        Task<byte[]> GetObject(MainIndexRow row);
     }
 }

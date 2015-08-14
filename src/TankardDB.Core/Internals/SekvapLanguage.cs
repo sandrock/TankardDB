@@ -65,7 +65,7 @@ namespace TankardDB.Core.Internals
                     else if (c == ';' && cp1 != ';' || isEnd)
                     {
                         // end of start part
-                        AddToResult(result, "Value", value.Substring(captureStartIndex, captureLength));
+                        AddToResult(result, "Value", Unescape(value.Substring(captureStartIndex, captureLength)));
                         i++;
                         isStart = false;
                         isKey = true;
@@ -98,7 +98,7 @@ namespace TankardDB.Core.Internals
                     {
                         // end of start part
                         var capturedValue = value.Substring(captureStartIndex, captureLength);
-                        AddToResult(result, capturedKey, capturedValue);
+                        AddToResult(result, capturedKey, Unescape(capturedValue));
                         i++;
                         isStart = false;
                         isKey = true;

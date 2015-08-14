@@ -7,6 +7,7 @@ namespace TankardDB.Core
     using System.Threading;
     using System.Threading.Tasks;
     using TankardDB.Core.Internals;
+    using TankardDB.Core.Serialization;
     using TankardDB.Core.Stores;
 
     public class Tankard
@@ -15,12 +16,14 @@ namespace TankardDB.Core
 
         private readonly ReaderWriterLockSlim idsLock = new ReaderWriterLockSlim();
         private readonly List<long> idsList = new List<long>();
+        private readonly DefaultTankardSerializer serializer;
         private long idsReserveSize = 1L;
         private long assignedIds = 0L;
 
         public Tankard(IStore store)
         {
             this.store = store;
+            this.serializer = new DefaultTankardSerializer();
         }
 
         public TankardQuery Query
@@ -37,15 +40,36 @@ namespace TankardDB.Core
             
             var id = await this.GetNextId(setName);
             item.Id = id;
+
+            var serialized = this.serializer.Serialize(item);
             
             MainIndexRow objectIndex;
-            objectIndex = await this.store.AppendObject(item);
+            objectIndex = await this.store.AppendObject(id, serialized);
             
             // update ID index
             await this.store.AppendMainIndex(objectIndex);
 
             // update indexes
             //throw new NotImplementedException();
+        }
+
+        public async Task<ITankardItem> GetById(string id)
+        {
+            if (id == null)
+                throw new ArgumentNullException("id");
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentException("The value cannot be empty", "id");
+
+            // Seek MainIndex until desired id(s) are found
+            var row = await this.store.SeekLatestMainIndex(id);
+            if (row == null)
+                return null;
+
+            // Seek ObjectStore until object(s) are retreived
+            byte[] serialized = await this.store.GetObject(row);
+            
+            var value = this.serializer.Deserialize(serialized);
+            return (ITankardItem)value;
         }
 
         private string GetSetName(ITankardItem item)

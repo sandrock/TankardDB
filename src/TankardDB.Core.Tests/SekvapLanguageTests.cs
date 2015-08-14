@@ -40,14 +40,14 @@ namespace TankardDB.Core.Tests
                 lang.IsMatch(input);
             }
 
-            [TestMethod]
-            public void EmptyInput()
-            {
-                var lang = new SekvapLanguage();
-                string input = string.Empty;
-                bool result = lang.IsMatch(input);
-                Assert.IsFalse(result, "The input should not match the language processor");
-            }
+            ////[TestMethod]
+            ////public void EmptyInput()
+            ////{
+            ////    var lang = new SekvapLanguage();
+            ////    string input = string.Empty;
+            ////    bool result = lang.IsMatch(input);
+            ////    Assert.IsFalse(result, "The input should not match the language processor");
+            ////}
 
             [TestMethod]
             public void PrefixOk_NoValue()
@@ -85,7 +85,10 @@ namespace TankardDB.Core.Tests
                 var lang = new SekvapLanguage();
                 string input = string.Empty;
                 var result = lang.Parse(input);
-                Assert.IsNull(result);
+                Assert.IsNotNull(result);
+                Assert.AreEqual(1, result.Count);
+                Assert.AreEqual("Value", result[0].Key);
+                Assert.AreEqual(string.Empty, result[0].Value);
             }
 
             [TestMethod]
