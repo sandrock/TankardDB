@@ -4,12 +4,19 @@ namespace TankardDB.Core
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
+    using TankardDB.Core.Internals;
     using TankardDB.Core.Stores;
 
     public class Tankard
     {
         private readonly IStore store;
+
+        private readonly ReaderWriterLockSlim idsLock = new ReaderWriterLockSlim();
+        private readonly List<long> idsList = new List<long>();
+        private long idsReserveSize = 1L;
+        private long assignedIds = 0L;
 
         public Tankard(IStore store)
         {
@@ -24,14 +31,21 @@ namespace TankardDB.Core
             }
         }
 
-        public async Task<ITankardItem> Insert(ITankardItem item)
+        public async Task Insert(ITankardItem item)
         {
             var setName = this.GetSetName(item);
+            
             var id = await this.GetNextId(setName);
-            var appendResult = await this.store.AppendObject(item);
+            item.Id = id;
+            
+            MainIndexRow objectIndex;
+            objectIndex = await this.store.AppendObject(item);
+            
             // update ID index
+            await this.store.AppendMainIndex(objectIndex);
+
             // update indexes
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         private string GetSetName(ITankardItem item)
@@ -43,9 +57,55 @@ namespace TankardDB.Core
             return type.Name;
         }
 
-        private Task<string> GetNextId(string setName)
+        private async Task<string> GetNextId(string setName)
         {
-            throw new NotImplementedException();
+            // try get reserved id
+            this.idsLock.EnterWriteLock();
+            try
+            {
+                if (this.idsList.Count > 0)
+                {
+                    var index = 0;
+                    var id = this.idsList[index];
+                    this.idsList.RemoveAt(index);
+                    this.assignedIds++;
+                    return this.ConcatId(setName, id);
+                }
+                else
+                {
+                    if (this.assignedIds > this.idsReserveSize)
+                    {
+                        this.idsReserveSize = this.assignedIds;
+                    }
+                }
+            }
+            finally
+            {
+                this.idsLock.ExitWriteLock();
+            }
+
+            // no reserved id, create some more
+            var newList = await this.store.ReserveIds(this.idsReserveSize);
+
+            this.idsLock.EnterWriteLock();
+            try
+            {
+                this.idsList.AddRange(newList);
+                var index = 0;
+                var id = this.idsList[index];
+                this.idsList.RemoveAt(index);
+                this.assignedIds++;
+                return this.ConcatId(setName, id);
+            }
+            finally
+            {
+                this.idsLock.ExitWriteLock();
+            }
+        }
+
+        private string ConcatId(string setName, long id)
+        {
+            return setName + "-" + id;
         }
     }
 }
