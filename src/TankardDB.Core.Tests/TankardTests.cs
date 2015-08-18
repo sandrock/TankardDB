@@ -144,6 +144,37 @@ namespace TankardDB.Core.Tests
                 Assert.AreEqual(expectedId, result.Id);
                 Assert.AreEqual(inserts[1].Name, result.Name);
             }
+
+            [TestMethod, ExpectedException(typeof(ArgumentNullException))]
+            public async Task Multiple_Arg0IsNull()
+            {
+                var target = GetTarget();
+                string[] ids = null;
+                var result = await target.GetById(ids);
+            }
+
+            [TestMethod]
+            public async Task Multiple_SecondInsert()
+            {
+                var target = GetTarget();
+
+                AClass[] inserts = new AClass[]
+                {
+                    new AClass("Hello world"),
+                    new AClass("Poke & mon"),
+                };
+                await target.Insert(inserts[0]);
+                await target.Insert(inserts[1]);
+
+                string[] ids = inserts.Select(x => x.Id).ToArray();
+
+                ITankardItem[] result = await target.GetById(ids);
+                Assert.IsNotNull(result);
+                Assert.AreEqual(2, result.Length);
+                int i = -1;
+                Assert.AreEqual(inserts[++i].Name, ((AClass)result[i]).Name);
+                Assert.AreEqual(inserts[++i].Name, ((AClass)result[i]).Name);
+            }
         }
     }
 }

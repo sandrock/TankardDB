@@ -52,5 +52,15 @@ namespace TankardDB.Core.Tests
             this.GetObjectCount += 1;
             return await this.GetObjectDelegate(row);
         }
+
+        public Task<MainIndexRow[]> SeekLatestMainIndex(string[] ids)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<byte[][]> GetObjects(MainIndexRow[] rows)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

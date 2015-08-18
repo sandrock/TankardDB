@@ -127,6 +127,50 @@ namespace TankardDB.Core.Stores
             });
         }
 
+        public async Task<MainIndexRow[]> SeekLatestMainIndex(string[] ids)
+        {
+            if (ids == null)
+                throw new ArgumentNullException("ids");
+
+            return await Task.Run(() =>
+            {
+                this.mainIndexLock.EnterReadLock();
+                try
+                {
+                    var result = new MainIndexRow[ids.Length];
+                    for (int i = 0; i < this.mainIndex.Count; i++)
+                    {
+                        var itemAsString = this.mainIndex[this.mainIndex.Count - i - 1];
+                        var itemData = this.lang.Parse(itemAsString);
+                        var row = new MainIndexRow(itemData);
+
+                        for (int j = 0; j < ids.Length; j++)
+                        {
+                            var id = ids[j];
+                            if (id != null && row.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (result[j] == null)
+                                {
+                                    result[j] = row;
+
+                                    if (result.All(r => r != null))
+                                    {
+                                        return result;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    return result;
+                }
+                finally
+                {
+                    this.mainIndexLock.ExitReadLock();
+                }
+            });
+        }
+
         public async Task<byte[]> GetObject(MainIndexRow row)
         {
             if (row == null)
@@ -140,6 +184,35 @@ namespace TankardDB.Core.Stores
                     var bytes = this.objectStore[checked((int)row.ObjectStoreBeginIndex)];
                     Debug.Assert(bytes.Length == row.ObjectStoreLength, "MemoryStore.GetObject: bytes.Length != row.ObjectStoreLength");
                     return bytes;
+                }
+                finally
+                {
+                    this.objectLock.ExitReadLock();
+                }
+            });
+        }
+
+        public async Task<byte[][]> GetObjects(MainIndexRow[] rows)
+        {
+            if (rows == null)
+                throw new ArgumentNullException("rows");
+
+            return await Task.Run(() =>
+            {
+                this.objectLock.EnterReadLock();
+                try
+                {
+                    var result = new byte[rows.Length][];
+                    for (int i = 0; i < rows.Length; i++)
+                    {
+                        var row = rows[i];
+
+                        var bytes = this.objectStore[checked((int)row.ObjectStoreBeginIndex)];
+                        Debug.Assert(bytes.Length == row.ObjectStoreLength, "MemoryStore.GetObject: bytes.Length != row.ObjectStoreLength");
+                        result[i] = bytes;
+                    }
+
+                    return result;
                 }
                 finally
                 {

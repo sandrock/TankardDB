@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App2", "App2", "{BB7AF578-6119-41C0-BCC1-DC887C44518F}"
 EndProject
@@ -15,17 +15,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TankardDB.Core", "TankardDB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1FCE17A4-0B2D-4D1A-BC1B-46FEEF189D65}"
 	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
 		TODO.txt = TODO.txt
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TankardDB.Core.Tests", "TankardDB.Core.Tests\TankardDB.Core.Tests.csproj", "{64C64006-86DB-4EE3-ABEE-C1708E196172}"
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		App2\App2.Shared\App2.Shared.projitems*{97550581-c526-4a16-95bf-ce6252601d82}*SharedItemsImports = 4
-		App2\App2.Shared\App2.Shared.projitems*{06172a61-f2cd-4e99-92b4-e1df50ac2230}*SharedItemsImports = 4
-		App2\App2.Shared\App2.Shared.projitems*{91e46a51-b43f-45ed-b509-1fc2739e58f9}*SharedItemsImports = 13
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM

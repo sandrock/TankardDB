@@ -17,6 +17,10 @@ namespace TankardDB.Core.Stores
 
         Task<MainIndexRow> SeekLatestMainIndex(string id);
 
+        Task<MainIndexRow[]> SeekLatestMainIndex(string[] ids);
+
         Task<byte[]> GetObject(MainIndexRow row);
+
+        Task<byte[][]> GetObjects(MainIndexRow[] rows);
     }
 }

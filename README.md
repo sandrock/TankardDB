@@ -11,7 +11,7 @@ POC. See [TODO](TODO.md).
 
 Provide a super-simple way to store and retreive C# objects.
 
-Store in momory or on disk. Or someplace else.
+Store in memory or on disk. Or someplace else.
 
 ## Why?
 

@@ -72,6 +72,31 @@ namespace TankardDB.Core
             return (ITankardItem)value;
         }
 
+        public async Task<ITankardItem[]> GetById(string[] ids)
+        {
+            if (ids == null)
+                throw new ArgumentNullException("ids");
+
+            // Seek MainIndex until desired id(s) are found
+            var rows = await this.store.SeekLatestMainIndex(ids);
+            if (rows == null)
+                return null;
+
+            // Seek ObjectStore until object(s) are retreived
+            byte[][] serializeds = await this.store.GetObjects(rows);
+
+            var result = new ITankardItem[serializeds.Length];
+            for (int i = 0; i < serializeds.Length; i++)
+            {
+                if (serializeds[i] != null)
+                {
+                    result[i] = (ITankardItem)this.serializer.Deserialize(serializeds[i]);
+                }
+            }
+            
+            return result;
+        }
+
         private string GetSetName(ITankardItem item)
         {
             var type = item.GetType();
