@@ -12,12 +12,14 @@ namespace TankardDB.Core.Internals
         private const string objectStoreEndIndexKey = "Str.End";
         private const string objectStoreLengthKey = "Str.Len";
         private const string isDeletedKey = "Del";
+        private const string typeKey = "Type";
 
         private readonly string id;
         private readonly long? objectStoreBeginIndex;
         private readonly long? objectStoreEndIndex;
         private readonly long? objectStoreLength;
         private readonly bool? isDeleted;
+        private string type;
 
         public MainIndexRow(string id, long objectStoreBeginIndex, long objectStoreEndIndex)
         {
@@ -96,6 +98,10 @@ namespace TankardDB.Core.Internals
                         throw new InvalidOperationException("Invalid value '" + value + "' for " + key);
                     }
                 }
+                else if (key == typeKey)
+                {
+                    this.type = value;
+                }
                 else
                 {
                     throw new InvalidOperationException("Invalid key '" + key + "'");
@@ -128,6 +134,12 @@ namespace TankardDB.Core.Internals
             get { return isDeleted; }
         }
 
+        public string Type
+        {
+            get { return this.type; }
+            set { this.type = value; }
+        }
+
         public override string ToString()
         {
             return base.ToString();
@@ -154,6 +166,8 @@ namespace TankardDB.Core.Internals
                 values.Add(new KeyValuePair<string, string>(objectStoreEndIndexKey, this.objectStoreEndIndex.Value.ToString()));
             if (this.objectStoreLength != null)
                 values.Add(new KeyValuePair<string, string>(objectStoreLengthKey, this.objectStoreLength.Value.ToString()));
+            if (this.type != null)
+                values.Add(new KeyValuePair<string, string>(typeKey, this.type));
             return lang.Write(values);
         }
     }

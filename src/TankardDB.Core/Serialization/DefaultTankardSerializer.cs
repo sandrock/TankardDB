@@ -34,10 +34,10 @@ namespace TankardDB.Core.Serialization
             return bytes;
         }
 
-        internal object Deserialize(byte[] serialized)
+        internal object Deserialize(byte[] serialized, Type type)
         {
             var json = this.encoding.GetString(serialized, 0, serialized.Length);
-            var obj = JsonConvert.DeserializeObject(json, this.settings);
+            var obj = JsonConvert.DeserializeObject(json, type, this.settings);
             return obj;
         }
     }

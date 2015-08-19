@@ -47,6 +47,7 @@ namespace TankardDB.Core
             objectIndex = await this.store.AppendObject(id, serialized);
             
             // update ID index
+            objectIndex.Type = item.GetType().AssemblyQualifiedName;
             await this.store.AppendMainIndex(objectIndex);
 
             // update indexes
@@ -67,8 +68,9 @@ namespace TankardDB.Core
 
             // Seek ObjectStore until object(s) are retreived
             byte[] serialized = await this.store.GetObject(row);
-            
-            var value = this.serializer.Deserialize(serialized);
+            var type = Type.GetType(row.Type, true);
+
+            var value = this.serializer.Deserialize(serialized, type);
             return (ITankardItem)value;
         }
 
