@@ -62,5 +62,10 @@ namespace TankardDB.Core.Tests
         {
             throw new NotImplementedException();
         }
+
+        public IStoreLock GetReadLock()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

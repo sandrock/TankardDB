@@ -14,7 +14,7 @@ namespace TankardDB.Core.Tests
     [TestClass]
     public class TankardTests
     {
-        public class AClass : ITankardItem
+        public class AClass : ITankardItem, ITest
         {
             public AClass()
             {
@@ -29,7 +29,7 @@ namespace TankardDB.Core.Tests
             public string Name { get; set; }
         }
 
-        public class BClass : ITankardItem
+        public class BClass : ITankardItem, ITest
         {
             public BClass()
             {
@@ -42,6 +42,11 @@ namespace TankardDB.Core.Tests
 
             public string Id { get; set; }
             public string Name { get; set; }
+        }
+
+        public interface ITest
+        {
+            string Name { get; set; }
         }
 
         [TestClass]
@@ -76,7 +81,7 @@ namespace TankardDB.Core.Tests
                 {
                     return await Task.Run(() => new long[] { 1, });
                 };
-                store.AppendObjectDelegate = async (id,bytes) =>
+                store.AppendObjectDelegate = async (id, bytes) =>
                 {
                     return await Task.Run(() =>
                     {
@@ -125,7 +130,7 @@ namespace TankardDB.Core.Tests
             public async Task Single_FirstInsert()
             {
                 var target = GetTarget();
-                
+
                 AClass insert = new AClass("Hello world");
                 await target.Insert(insert);
                 string id = insert.Id;
@@ -232,7 +237,7 @@ namespace TankardDB.Core.Tests
                 Assert.IsNull(result);
             }
 
-            [TestMethod, ExpectedException(typeof(InvalidOperationException))]
+            [TestMethod, ExpectedException(typeof(InvalidCastException))]
             public async Task SingleByType_WrongType()
             {
                 var target = GetTarget();
@@ -249,7 +254,7 @@ namespace TankardDB.Core.Tests
             {
                 var target = GetTarget();
                 string[] id = null;
-                AClass result = await target.GetById<AClass>(id);
+                AClass[] result = await target.GetById<AClass>(id);
             }
 
             [TestMethod]
@@ -289,7 +294,7 @@ namespace TankardDB.Core.Tests
                 Assert.IsNull(result[++i]);
             }
 
-            [TestMethod, ExpectedException(typeof(InvalidOperationException))]
+            [TestMethod, ExpectedException(typeof(InvalidCastException))]
             public async Task MultipleByType_WrongType()
             {
                 var target = GetTarget();
@@ -304,6 +309,105 @@ namespace TankardDB.Core.Tests
                 string[] ids = inserts.Select(x => x.Id).ToArray();
 
                 BClass[] result = await target.GetById<BClass>(ids);
+            }
+        }
+
+        [TestClass]
+        public class QueryProperty
+        {
+            private static ITankardItem[] inserts;
+
+            static QueryProperty()
+            {
+                int i = 0;
+                inserts = new ITankardItem[]
+                {
+                    new AClass("obj-" + ++i),
+                    new AClass("obj-" + ++i),
+                    new BClass("obj-" + ++i),
+                    new BClass("obj-" + ++i),
+                    new AClass("obj-" + ++i),
+                    new BClass("obj-" + ++i),
+                };
+            }
+
+            private static async Task<Tankard> GetTarget()
+            {
+                var store = new MemoryStore();
+                var target = new Tankard(store);
+                foreach (var item in inserts)
+                {
+                    await target.Insert(item);
+                }
+
+                return new Tankard(store);
+            }
+
+            [TestMethod]
+            public async Task ListAllObjects()
+            {
+                var target = await GetTarget();
+                var query = target.Query;
+
+                int i = -1;
+                foreach (var item in query)
+                {
+                    i++;
+                    var id = inserts.Length - i;
+                    Assert.AreEqual("obj-" + id, ((ITest)item).Name);
+                    var insert = inserts[inserts.Length - i - 1];
+                    Assert.AreEqual(((ITest)insert).Name, ((ITest)item).Name);
+                    Assert.AreEqual(insert.Id, item.Id);
+                }
+
+                Assert.AreEqual(inserts.Length - 1, i);
+            }
+
+            [TestMethod]
+            public async Task ListAllObjectsAgain()
+            {
+                var target = await GetTarget();
+                var query = target.Query;
+
+                foreach (var item in query)
+                {
+                }
+
+                query = target.Query;
+                int i = -1;
+                foreach (var item in query)
+                {
+                    i++;
+                    var id = inserts.Length - i;
+                    Assert.AreEqual("obj-" + id, ((ITest)item).Name);
+                    var insert = inserts[inserts.Length - i - 1];
+                    Assert.AreEqual(((ITest)insert).Name, ((ITest)item).Name);
+                    Assert.AreEqual(insert.Id, item.Id);
+                }
+
+                Assert.AreEqual(inserts.Length - 1, i);
+            }
+
+            [TestMethod]
+            public async Task ListAllObjectsOfType()
+            {
+                var target = await GetTarget();
+                var query = target.Query.OfType<AClass>();
+                var insertsQuery = inserts.Reverse().OfType<AClass>().ToArray();
+
+                int i = -1;
+                foreach (var item in query)
+                {
+                    i++;
+                    var id = inserts.Length - i;
+                    Assert.IsInstanceOfType(item, typeof(AClass));
+                    Assert.AreEqual("obj-" + id, ((ITest)item).Name);
+                    var insert = insertsQuery[insertsQuery.Length - i - 1];
+                    Assert.AreEqual(((ITest)insert).Name, ((ITest)item).Name);
+                    Assert.AreEqual(insert.Id, item.Id);
+                }
+
+                Assert.AreEqual(insertsQuery.Length - 1, i);
             }
         }
     }

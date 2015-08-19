@@ -34,11 +34,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Internals\DisposableOnce.cs" />
     <Compile Include="Internals\MainIndexRow.cs" />
     <Compile Include="Internals\SekvapLanguage.cs" />
     <Compile Include="ITankardItem.cs" />
     <Compile Include="Serialization\DefaultTankardSerializer.cs" />
     <Compile Include="Stores\IStore.cs" />
+    <Compile Include="Stores\IStoreLock.cs" />
     <Compile Include="Stores\MemoryStore.cs" />
     <Compile Include="Stores\TankardConfiguration.cs" />
     <Compile Include="Tankard.cs" />

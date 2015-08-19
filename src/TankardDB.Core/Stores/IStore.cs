@@ -22,5 +22,7 @@ namespace TankardDB.Core.Stores
         Task<byte[]> GetObject(MainIndexRow row);
 
         Task<byte[][]> GetObjects(MainIndexRow[] rows);
+
+        IStoreLock GetReadLock();
     }
 }

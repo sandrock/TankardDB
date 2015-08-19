@@ -19,6 +19,7 @@ namespace TankardDB.Core
         private readonly DefaultTankardSerializer serializer;
         private long idsReserveSize = 1L;
         private long assignedIds = 0L;
+        internal StringComparer stringComparer = StringComparer.OrdinalIgnoreCase;
 
         public Tankard(IStore store)
         {
@@ -32,6 +33,11 @@ namespace TankardDB.Core
             {
                 return new TankardQuery(this);
             }
+        }
+
+        internal IStore Store
+        {
+            get { return this.store; }
         }
 
         public async Task Insert(ITankardItem item)
@@ -100,6 +106,13 @@ namespace TankardDB.Core
             return result;
         }
 
+        internal ITankardItem Deserialize(byte[] bytes, MainIndexRow row)
+        {
+            var type = Type.GetType(row.Type);
+            var obj = this.serializer.Deserialize(bytes, type);
+            return (ITankardItem)obj;
+        }
+
         private string GetSetName(ITankardItem item)
         {
             var type = item.GetType();
@@ -158,6 +171,29 @@ namespace TankardDB.Core
         private string ConcatId(string setName, long id)
         {
             return setName + "-" + id;
+        }
+
+        public async Task<T[]> GetById<T>(string[] ids)
+        {
+            var result = await this.GetById(ids);
+            var array = new T[ids.Length];
+            for (int i = 0; i < ids.Length; i++)
+            {
+                array[i] = (T)result[i];
+            }
+
+            return array;
+        }
+
+        public async Task<T> GetById<T>(string id)
+        {
+            if (id == null)
+                throw new ArgumentNullException("id");
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentException("The value cannot be empty", "id");
+
+            var result = await this.GetById<T>(new string[] { id, });
+            return result[0];
         }
     }
 }

@@ -9,7 +9,7 @@ namespace TankardDB.Core.Stores
     using System.Threading.Tasks;
     using TankardDB.Core.Internals;
 
-    public class MemoryStore : IStore
+    public sealed class MemoryStore : IStore
     {
         private readonly List<Range> occupiedIdRanges = new List<Range>();
         private readonly ReaderWriterLockSlim occupiedIdLock = new ReaderWriterLockSlim();
@@ -206,10 +206,12 @@ namespace TankardDB.Core.Stores
                     for (int i = 0; i < rows.Length; i++)
                     {
                         var row = rows[i];
-
-                        var bytes = this.objectStore[checked((int)row.ObjectStoreBeginIndex)];
-                        Debug.Assert(bytes.Length == row.ObjectStoreLength, "MemoryStore.GetObject: bytes.Length != row.ObjectStoreLength");
-                        result[i] = bytes;
+                        if (row != null)
+                        {
+                            var bytes = this.objectStore[checked((int)row.ObjectStoreBeginIndex)];
+                            Debug.Assert(bytes.Length == row.ObjectStoreLength, "MemoryStore.GetObject: bytes.Length != row.ObjectStoreLength");
+                            result[i] = bytes;
+                        }
                     }
 
                     return result;
@@ -219,6 +221,72 @@ namespace TankardDB.Core.Stores
                     this.objectLock.ExitReadLock();
                 }
             });
+        }
+
+        public IStoreLock GetReadLock()
+        {
+            var storeLock = new StoreLock(this, () =>
+            {
+                this.mainIndexLock.ExitReadLock();
+                this.objectLock.ExitReadLock();
+            });
+            this.mainIndexLock.EnterReadLock();
+            this.objectLock.EnterReadLock();
+            return storeLock;
+        }
+
+        internal MainIndexRow ReadMainIndex(int index)
+        {
+            if (index >= this.mainIndex.Count)
+                return null;
+
+            var itemAsString = this.mainIndex[this.mainIndex.Count - index - 1];
+            var itemData = this.lang.Parse(itemAsString);
+            var row = new MainIndexRow(itemData);
+            return row;
+        }
+
+        internal byte[] ReadObjectStore(long index, long length)
+        {
+            var bytes = this.objectStore[checked((int)index)];
+            Debug.Assert(bytes.Length == length, "MemoryStore.ReadObjectStore: bytes.Length != length");
+            return bytes;
+        }
+
+        private sealed class StoreLock : IStoreLock
+        {
+            private readonly MemoryStore store;
+            private Action disposeAction;
+            private int mainIndexIndex = -1;
+
+            public StoreLock(MemoryStore store, Action disposeAction)
+            {
+                this.store = store;
+                this.disposeAction = disposeAction;
+            }
+
+            public void Dispose()
+            {
+                var action = this.disposeAction;
+                this.disposeAction = null;
+                if (action != null)
+                {
+                    action();
+                }
+            }
+
+            public async Task<MainIndexRow> GetNextMainIndexRow()
+            {
+                var index = ++this.mainIndexIndex;
+                var item = this.store.ReadMainIndex(index);
+                return item;
+            }
+
+            public async Task<byte[]> GetObject(MainIndexRow row)
+            {
+                var result = this.store.ReadObjectStore(row.ObjectStoreBeginIndex.Value, row.ObjectStoreLength.Value);
+                return result;
+            }
         }
 
         private struct Range
