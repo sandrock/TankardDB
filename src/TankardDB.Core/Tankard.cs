@@ -92,7 +92,8 @@ namespace TankardDB.Core
             {
                 if (serializeds[i] != null)
                 {
-                    result[i] = (ITankardItem)this.serializer.Deserialize(serializeds[i]);
+                    var type = Type.GetType(rows[i].Type);
+                    result[i] = (ITankardItem)this.serializer.Deserialize(serializeds[i], type);
                 }
             }
             

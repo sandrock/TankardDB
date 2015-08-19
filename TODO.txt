@@ -23,9 +23,13 @@ Public methods
 - [x] GetById(string id)
   - Seek MainIndex until desired id(s) are found
   - Seek ObjectStore until object(s) are retreived
-- [ ] List
+- [x] GetById(string[] ids)
+- [ ] GetById<Type>(string id)
+- [ ] GetById<Type>(string[] ids)
+- [ ] List()
   - Read n unique ids from main index
   - Read from ObjectStore
+- [ ] List<Type>()
 - [ ] Count
   - Count unique ids from MainIndex
 - [ ] List<T>

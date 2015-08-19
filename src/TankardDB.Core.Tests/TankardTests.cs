@@ -29,6 +29,21 @@ namespace TankardDB.Core.Tests
             public string Name { get; set; }
         }
 
+        public class BClass : ITankardItem
+        {
+            public BClass()
+            {
+            }
+
+            public BClass(string name)
+            {
+                this.Name = name;
+            }
+
+            public string Id { get; set; }
+            public string Name { get; set; }
+        }
+
         [TestClass]
         public class InsertMethod
         {
@@ -165,7 +180,6 @@ namespace TankardDB.Core.Tests
                 };
                 await target.Insert(inserts[0]);
                 await target.Insert(inserts[1]);
-
                 string[] ids = inserts.Select(x => x.Id).ToArray();
 
                 ITankardItem[] result = await target.GetById(ids);
@@ -174,6 +188,122 @@ namespace TankardDB.Core.Tests
                 int i = -1;
                 Assert.AreEqual(inserts[++i].Name, ((AClass)result[i]).Name);
                 Assert.AreEqual(inserts[++i].Name, ((AClass)result[i]).Name);
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentNullException))]
+            public async Task SingleByType_Arg0IsNull()
+            {
+                var target = GetTarget();
+                string id = null;
+                var result = await target.GetById<AClass>(id);
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentException))]
+            public async Task SingleByType_Arg0IsEmpty()
+            {
+                var target = GetTarget();
+                string id = string.Empty;
+                var result = await target.GetById<AClass>(id);
+            }
+
+            [TestMethod]
+            public async Task SingleByType_Ok()
+            {
+                var target = GetTarget();
+
+                AClass insert = new AClass("Hello world");
+                await target.Insert(insert);
+                string id = insert.Id;
+
+                AClass result = await target.GetById<AClass>(id);
+                Assert.IsNotNull(result);
+                Assert.AreEqual(id, result.Id);
+                Assert.AreEqual(insert.Name, result.Name);
+            }
+
+            [TestMethod]
+            public async Task SingleByType_NotFound()
+            {
+                var target = GetTarget();
+
+                string id = "AClass-345";
+
+                AClass result = await target.GetById<AClass>(id);
+                Assert.IsNull(result);
+            }
+
+            [TestMethod, ExpectedException(typeof(InvalidOperationException))]
+            public async Task SingleByType_WrongType()
+            {
+                var target = GetTarget();
+
+                AClass insert = new AClass("Hello world");
+                await target.Insert(insert);
+                string id = insert.Id;
+
+                BClass result = await target.GetById<BClass>(id);
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentNullException))]
+            public async Task MultipleByType_Arg0IsNull()
+            {
+                var target = GetTarget();
+                string[] id = null;
+                AClass result = await target.GetById<AClass>(id);
+            }
+
+            [TestMethod]
+            public async Task MultipleByType_Ok()
+            {
+                var target = GetTarget();
+
+                AClass[] inserts = new AClass[]
+                {
+                    new AClass("Hello world"),
+                    new AClass("Poke & mon"),
+                };
+                await target.Insert(inserts[0]);
+                await target.Insert(inserts[1]);
+                string[] ids = inserts.Select(x => x.Id).ToArray();
+
+                AClass[] result = await target.GetById<AClass>(ids);
+                Assert.IsNotNull(result);
+                Assert.AreEqual(2, result.Length);
+                int i = -1;
+                Assert.AreEqual(inserts[++i].Name, ((AClass)result[i]).Name);
+                Assert.AreEqual(inserts[++i].Name, ((AClass)result[i]).Name);
+            }
+
+            [TestMethod]
+            public async Task MultipleByType_NotFound()
+            {
+                var target = GetTarget();
+
+                string[] id = new string[] { "AClass-345", "AClass-852", };
+
+                AClass[] result = await target.GetById<AClass>(id);
+                Assert.IsNotNull(result);
+                Assert.AreEqual(2, result.Length);
+                int i = -1;
+                Assert.IsNull(result[++i]);
+                Assert.IsNull(result[++i]);
+            }
+
+            [TestMethod, ExpectedException(typeof(InvalidOperationException))]
+            public async Task MultipleByType_WrongType()
+            {
+                var target = GetTarget();
+
+                AClass[] inserts = new AClass[]
+                {
+                    new AClass("Hello world"),
+                    new AClass("Poke & mon"),
+                };
+                await target.Insert(inserts[0]);
+                await target.Insert(inserts[1]);
+                string[] ids = inserts.Select(x => x.Id).ToArray();
+
+                BClass[] result = await target.GetById<BClass>(ids);
             }
         }
     }
