@@ -12,35 +12,39 @@ TankardDB instance
 Public methods
 -----------------
 
-- [x] Insert(obj)
+- [x] .Insert(obj)
   - Generate a new ID
   - Append object to ObjectStore
   - Append MainIndex
   - Update indexes
-- [ ] Delete/Update(object)
+- [ ] .Delete/.Update(object)
   - Append empty/changed objects to ObjectStore
   - Append MainIndex
-- [x] GetById(string id)
+- [x] .GetById(string id)
   - Seek MainIndex until desired id(s) are found
   - Seek ObjectStore until object(s) are retreived
-- [x] GetById(string[] ids)
-- [x] GetById<Type>(string id)
-- [x] GetById<Type>(string[] ids)
-- [ ] List()
+- [x] .GetById(string[] ids)
+- [x] .GetById<Type>(string id)
+- [x] .GetById<Type>(string[] ids)
+- [x] .Query
   - Read n unique ids from main index
   - Read from ObjectStore
-- [ ] List<Type>()
-- [ ] Count
+- [ ] .Query<Type>()
+- [ ] .Count
   - Count unique ids from MainIndex
-- [ ] List<T>
+- [ ] .List<T>
   - Read n unique ids from MainIndex where (Name(T))
-- [ ] CreateIndex<T(Expression<Func<T, object>> )
+- [ ] .CreateIndex<T(Expression<Func<T, object>> )
 
 
 Internal todo
 -----------------
 
 - [x] Import SekvapLanguage.cs
+- [x] MemoryStore
+- [ ] FileStore
+- [ ] IsolatedFileStore
+- [ ] File headers
 
 
 Object store (file)
