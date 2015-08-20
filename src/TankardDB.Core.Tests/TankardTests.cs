@@ -27,6 +27,11 @@ namespace TankardDB.Core.Tests
 
             public string Id { get; set; }
             public string Name { get; set; }
+
+            public override string ToString()
+            {
+                return this.Id ?? ("AClass " + this.Name);
+            }
         }
 
         public class BClass : ITankardItem, ITest
@@ -42,6 +47,11 @@ namespace TankardDB.Core.Tests
 
             public string Id { get; set; }
             public string Name { get; set; }
+
+            public override string ToString()
+            {
+                return this.Id ?? ("BClass " + this.Name);
+            }
         }
 
         public interface ITest
@@ -392,17 +402,75 @@ namespace TankardDB.Core.Tests
             public async Task ListAllObjectsOfType()
             {
                 var target = await GetTarget();
-                var query = target.Query.OfType<AClass>();
-                var insertsQuery = inserts.Reverse().OfType<AClass>().ToArray();
+                var query = target.Query.OfType<AClass>().ToArray().Reverse().ToArray();
+                var insertsQuery = inserts.OfType<AClass>().ToArray();
 
                 int i = -1;
                 foreach (var item in query)
                 {
                     i++;
-                    var id = inserts.Length - i;
                     Assert.IsInstanceOfType(item, typeof(AClass));
-                    Assert.AreEqual("obj-" + id, ((ITest)item).Name);
-                    var insert = insertsQuery[insertsQuery.Length - i - 1];
+                    var insert = insertsQuery[i];
+                    Assert.AreEqual(insert.Name, ((ITest)item).Name);
+                    Assert.AreEqual(insert.Id, item.Id);
+                }
+
+                Assert.AreEqual(insertsQuery.Length - 1, i);
+            }
+
+            [TestMethod]
+            public async Task ListAllObjectsWhereIsOfType()
+            {
+                var target = await GetTarget();
+                var query = target.Query.Where(x => x is AClass).ToArray().Reverse().ToArray();
+                var insertsQuery = inserts.Where(x => x is AClass).ToArray();
+
+                int i = -1;
+                foreach (var item in query)
+                {
+                    i++;
+                    Assert.IsInstanceOfType(item, typeof(AClass));
+                    var insert = insertsQuery[i];
+                    Assert.AreEqual(((ITest)insert).Name, ((ITest)item).Name);
+                    Assert.AreEqual(insert.Id, item.Id);
+                }
+
+                Assert.AreEqual(insertsQuery.Length - 1, i);
+            }
+
+            [TestMethod]
+            public async Task ListAllObjectsPage0()
+            {
+                var target = await GetTarget();
+                var query = target.Query.Skip(0).Take(2).ToArray().Reverse().ToArray();
+                var insertsQuery = inserts.Skip(4).Take(2).ToArray();
+
+                Assert.AreEqual(2, insertsQuery.Length);
+                int i = -1;
+                foreach (var item in query)
+                {
+                    i++;
+                    var insert = insertsQuery[i];
+                    Assert.AreEqual(((ITest)insert).Name, ((ITest)item).Name);
+                    Assert.AreEqual(insert.Id, item.Id);
+                }
+
+                Assert.AreEqual(insertsQuery.Length - 1, i);
+            }
+
+            [TestMethod]
+            public async Task ListAllObjectsPage1()
+            {
+                var target = await GetTarget();
+                var query = target.Query.Skip(2).Take(2).ToArray().Reverse().ToArray();
+                var insertsQuery = inserts.Skip(2).Take(2).ToArray();
+
+                Assert.AreEqual(2, insertsQuery.Length);
+                int i = -1;
+                foreach (var item in query)
+                {
+                    i++;
+                    var insert = insertsQuery[i];
                     Assert.AreEqual(((ITest)insert).Name, ((ITest)item).Name);
                     Assert.AreEqual(insert.Id, item.Id);
                 }

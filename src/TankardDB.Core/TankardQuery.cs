@@ -50,25 +50,13 @@ namespace TankardDB.Core
         {
             get
             {
-                if (this.currentValue == null)
-                {
-                    var row = this.current;
-                    if (row != null)
-                    {
-                        var task = this.storeLock.GetObject(row);
-                        task.Wait();
-                        var serialized = task.Result;
-                        this.currentValue = this.core.Deserialize(serialized, row);
-                    }
-                }
-
-                return this.currentValue;
+                return this.GetCurrentValue();
             }
         }
 
         object IEnumerator.Current
         {
-            get { return this.currentValue; }
+            get { return this.GetCurrentValue(); }
         }
 
         bool IEnumerator.MoveNext()
@@ -132,6 +120,23 @@ namespace TankardDB.Core
 
                 this.disposed = true;
             }
+        }
+
+        private ITankardItem GetCurrentValue()
+        {
+            if (this.currentValue == null)
+            {
+                var row = this.current;
+                if (row != null)
+                {
+                    var task = this.storeLock.GetObject(row);
+                    task.Wait();
+                    var serialized = task.Result;
+                    this.currentValue = this.core.Deserialize(serialized, row);
+                }
+            }
+
+            return this.currentValue;
         }
     }
 }
